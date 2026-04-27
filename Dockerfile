@@ -3,9 +3,6 @@
 ARG BUN_VERSION=1.3.1
 ARG DBMATE_VERSION=2.28.0
 
-FROM ghcr.io/amacneil/dbmate:${DBMATE_VERSION} AS dbmate
-
-
 FROM oven/bun:${BUN_VERSION} AS deps
 WORKDIR /app
 
@@ -15,15 +12,18 @@ RUN bun install --ci --production
 FROM oven/bun:${BUN_VERSION} AS runtime
 WORKDIR /app
 
-# Install jq for config parsing
-RUN apt-get update && apt-get install -y jq && rm -rf /var/lib/apt/lists/*
+# Install jq for config parsing and curl for dbmate download
+RUN apt-get update && apt-get install -y jq curl && rm -rf /var/lib/apt/lists/*
 
-# Pull in just the dbmate binary (multi-arch friendly)
-COPY --from=dbmate /usr/local/bin/dbmate /usr/local/bin/dbmate
+# Download dbmate binary directly from GitHub releases
+ARG DBMATE_VERSION
+RUN curl -fsSL -o /usr/local/bin/dbmate \
+    "https://github.com/amacneil/dbmate/releases/download/v${DBMATE_VERSION}/dbmate-linux-$(dpkg --print-architecture)" && \
+    chmod +x /usr/local/bin/dbmate
 
 # Copy migration runner script
 COPY bin/run-migrations.sh /usr/local/bin/run-migrations.sh
-RUN chmod +x /usr/local/bin/run-migrations.sh
+RUN sed -i 's/\r//' /usr/local/bin/run-migrations.sh && chmod +x /usr/local/bin/run-migrations.sh
 
 # pull node modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules

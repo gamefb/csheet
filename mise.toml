@@ -26,7 +26,6 @@ description = "Start production server"
 [tasks."app:container"]
 run = "docker compose --profile app up --build app"
 description = "Build and run the app container alongside local deps"
-depends = ["s3:setup"]
 
 [tasks."infra:preview"]
 run = "pulumi preview --cwd pulumi/infra \"$@\""

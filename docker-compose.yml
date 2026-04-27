@@ -17,6 +17,20 @@ services:
       postgres:
         condition: service_healthy
 
+  minio-init:
+    profiles:
+      - app
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set myminio http://minio:9000 csheet_minio csheet_minio_pass &&
+        mc mb --ignore-existing myminio/csheet-uploads &&
+        echo 'Bucket ready.'
+      "
+
   app:
     profiles:
       - app
@@ -26,15 +40,23 @@ services:
     image: csheet-app:local
     environment:
       POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: csheet_user
+      POSTGRES_PASSWORD: csheet_pass
+      POSTGRES_DB: csheet_dev
       S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY_ID: csheet_minio
+      S3_SECRET_ACCESS_KEY: csheet_minio_pass
+      S3_BUCKET_NAME: csheet-uploads
+      COOKIE_SECRET: ${COOKIE_SECRET:-change-me-in-production}
     ports:
       - "3000:3000"
     depends_on:
       migrations:
         condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
       postgres:
-        condition: service_healthy
-      minio:
         condition: service_healthy
 
   postgres:
