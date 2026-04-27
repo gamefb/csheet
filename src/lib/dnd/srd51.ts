@@ -14,11 +14,10 @@ export const SRD51_ID = "srd51" as const
 export const SRD51_DESCRIPTION = "D&D 5e (2014)"
 
 
-const _dataModules = import.meta.glob('./srd51/*.ts', { eager: true }) as Record<
-  string,
-  { species?: Species[]; classes?: Record<ClassNameType, ClassDef>; backgrounds?: Record<string, Background> }
->
-const _dataValues = Object.values(_dataModules)
+import * as _core51 from './srd51/core'
+const _dataValues = [_core51] as Array<{
+  species?: Species[]; classes?: Record<ClassNameType, ClassDef>; backgrounds?: Record<string, Background>
+}>
 const allSpecies: Species[] = _dataValues.flatMap((m) => m.species ?? [])
 const allClasses = Object.assign(
   {} as Record<ClassNameType, ClassDef>,

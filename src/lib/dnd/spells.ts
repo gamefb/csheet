@@ -170,8 +170,5 @@ export interface Spell {
   tags?: string[]
 }
 
-const modules = import.meta.glob('./spells/*.ts', { eager: true }) as Record<
-  string,
-  { spells?: Spell[] }
->
-export const spells: Spell[] = Object.values(modules).flatMap((m) => m.spells ?? [])
+import * as _spellsSrd51 from './spells/srd51'
+export const spells: Spell[] = [_spellsSrd51].flatMap((m) => m.spells ?? [])
